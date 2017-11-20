@@ -8,7 +8,9 @@
 out
 gen### Java template
 *.class
-
+*ipr
+*.iml
+*.iws
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
@@ -40,7 +42,7 @@ project/plugins/project/*
 /target/scala-2.10/classes/
 /target/scala-2.10/target/
 /target/streams/
-
+/target
 
 
 # Scala-IDE specific

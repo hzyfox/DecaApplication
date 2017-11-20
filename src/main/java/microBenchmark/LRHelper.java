@@ -31,11 +31,6 @@ public class LRHelper {
                 lrName = "DecaJavaLR";
                 break;
             }
-            case 3: {
-                lr = new SerializeJavaLR();
-                lrName = "SerializeJavaLR";
-                break;
-            }
             case 4: {
                 lr = new MultiThreadJavaLR(partitions, cores);
                 lrName = "MultiThreadJavaLR";
@@ -46,11 +41,8 @@ public class LRHelper {
                 lrName = "MultiThreadDecaJavaLR";
                 break;
             }
-            case 6: {
-                lr = new MultiThreadSerializeJavaLR(partitions, cores);
-                lrName = "MultiThreadSerialzieJavaLR";
+            default:
                 break;
-            }
         }
         long startTime = System.currentTimeMillis();
         lr.textFile(dimensions, nums);
