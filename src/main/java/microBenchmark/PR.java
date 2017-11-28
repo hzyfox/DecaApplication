@@ -54,7 +54,7 @@ public abstract class PR {
 
     public void textFile(File file) {
         try {
-            TreeMap<Integer, ArrayList<Integer>> links = new TreeMap<>();
+            TreeMap<Integer, ArrayList<Integer>> links = new TreeMap<Integer, ArrayList<Integer>>();
             BitSet ids = new BitSet();
             ArrayList<Integer> tmpValueList;
             FileReader fileReader = new FileReader(file);
@@ -70,11 +70,12 @@ public abstract class PR {
                 if (links.containsKey(key)) {
                     tmpValueList = links.get(key);
                 } else {
-                    tmpValueList = new ArrayList<>();
+                    tmpValueList = new ArrayList<Integer>();
                     links.put(key, tmpValueList);
                 }
                 tmpValueList.add(value);
             }
+            fileReader.close();
             keyCount = links.size();
             idCount = ids.cardinality();
             count += keyCount;

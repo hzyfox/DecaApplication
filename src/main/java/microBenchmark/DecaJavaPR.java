@@ -94,6 +94,7 @@ public class DecaJavaPR extends PR {
             bytesToBytesMap.free();
         }
 
+        @Override
         public String toString() {
             Iterator<Location> iterator = bytesToBytesMap.iterator();
             StringBuilder stringBuilder = new StringBuilder();
@@ -165,11 +166,13 @@ public class DecaJavaPR extends PR {
                 Location keyValue = keyValues.next();
                 long tmpOffset = keyValue.getValueAddress().getBaseOffset();
                 double rankValue = unsafe.getDouble(tmpOffset);
-                if (rankValue < 0)
+                if (rankValue < 0) {
                     continue;
+                }
                 long listAddress = unsafe.getLong(tmpOffset + 8);
-                if (listAddress < 0)
+                if (listAddress < 0) {
                     continue;
+                }
                 long length = unsafe.getLong(listAddress);
                 double newValue = rankValue / length;
                 long offset = listAddress + 8;

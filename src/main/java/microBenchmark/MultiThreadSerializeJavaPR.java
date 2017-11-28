@@ -50,7 +50,7 @@ public class MultiThreadSerializeJavaPR extends MultiThreadPR {
             int key = entry.getKey();
             ArrayList<Integer> value = entry.getValue();
             int partitionId = key % numPartitions;
-            kryoes[partitionId].writeObject(outputs[partitionId], new Tuple2<>(key, value));
+            kryoes[partitionId].writeObject(outputs[partitionId], new Tuple2<Integer, ArrayList<Integer>>(key, value));
         }
         for (int i = 0; i < numPartitions; i++) {
             outputs[i].flush();
@@ -77,7 +77,7 @@ public class MultiThreadSerializeJavaPR extends MultiThreadPR {
             int[] counts = mapOutKeyCounts[partitionId];
             HashMap<Integer, Double>[] result = new HashMap[numPartitions];
             for (int i = 0; i < numPartitions; i++) {
-                result[i] = new HashMap<>(counts[i]);
+                result[i] = new HashMap<Integer, Double>(counts[i]);
             }
 
             int size = initKeyCounts[partitionId];
@@ -117,7 +117,7 @@ public class MultiThreadSerializeJavaPR extends MultiThreadPR {
             int count = reduceInKeyCounts[partitionId];
 
             // reduceBykey:reduce-side
-            HashMap<Integer, Double> reduceMap = new HashMap<>(count);
+            HashMap<Integer, Double> reduceMap = new HashMap<Integer, Double>(count);
             for (Map<Integer, Double> map : inMessages) {
                 for (Map.Entry<Integer, Double> entry : map.entrySet()) {
                     Integer key = entry.getKey();
@@ -130,7 +130,7 @@ public class MultiThreadSerializeJavaPR extends MultiThreadPR {
             }
 
             // join
-            HashMap<Integer, Pair> joinHashMap = new HashMap<>(count);
+            HashMap<Integer, Pair> joinHashMap = new HashMap<Integer, Pair>(count);
             int size = initKeyCounts[partitionId];
             for (int i = 0; i < size; i++) {
                 Tuple2<Integer, ArrayList<Integer>> keyValue =
@@ -153,7 +153,7 @@ public class MultiThreadSerializeJavaPR extends MultiThreadPR {
             int[] counts = mapOutKeyCounts[partitionId];
             HashMap<Integer, Double>[] result = new HashMap[numPartitions];
             for (int i = 0; i < numPartitions; i++) {
-                result[i] = new HashMap<>(counts[i]);
+                result[i] = new HashMap<Integer, Double>(counts[i]);
             }
             for (Map.Entry<Integer, Pair> joinKeyValue : joinHashMap.entrySet()) {
                 Pair rankValue = joinKeyValue.getValue();
@@ -187,7 +187,7 @@ public class MultiThreadSerializeJavaPR extends MultiThreadPR {
         @Override
         public HashMap<Integer, Double> call() throws Exception {
             // reduceBykey:reduce-side
-            HashMap<Integer, Double> reduceMap = new HashMap<>(count);
+            HashMap<Integer, Double> reduceMap = new HashMap<Integer, Double>(count);
             for (Map<Integer, Double> map : inMessages) {
                 for (Map.Entry<Integer, Double> entry : map.entrySet()) {
                     Integer key = entry.getKey();

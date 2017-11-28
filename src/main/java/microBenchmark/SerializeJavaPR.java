@@ -38,7 +38,7 @@ public class SerializeJavaPR extends PR {
         for (Map.Entry<Integer, ArrayList<Integer>> entry : links.entrySet()) {
             int key = entry.getKey();
             ArrayList<Integer> value = entry.getValue();
-            Tuple2<Integer, ArrayList<Integer>> keyValue = new Tuple2<>(key, value);
+            Tuple2<Integer, ArrayList<Integer>> keyValue = new Tuple2<Integer, ArrayList<Integer>>(key, value);
             kryo.writeObject(output, keyValue);
         }
         output.flush();
@@ -50,7 +50,7 @@ public class SerializeJavaPR extends PR {
     @Override
     public void compute(int iterations) {
 //        try {
-            HashMap<Integer, Double> ranks = new HashMap<>((int) (keyCount / 0.75f) + 1);
+            HashMap<Integer, Double> ranks = new HashMap<Integer, Double>((int) (keyCount / 0.75f) + 1);
 //            ObjectInputStream obj1 = new ObjectInputStream(cacheSerializeBytes.toInputStream());
 //            Input input1 = new Input(obj1);
             Input input1 = new Input(cacheSerializeBytes.toInputStream());
@@ -63,7 +63,7 @@ public class SerializeJavaPR extends PR {
 //                ObjectInputStream obj2 = new ObjectInputStream(cacheSerializeBytes.toInputStream());
 //                Input input2 = new Input(obj2);
                 Input input2 = new Input(cacheSerializeBytes.toInputStream());
-                HashMap<Integer, Pair> joinHashMap = new HashMap<>((int) (idCount / 0.75f) + 1);
+                HashMap<Integer, Pair> joinHashMap = new HashMap<Integer, Pair>((int) (idCount / 0.75f) + 1);
                 for (int j = 0; j < keyCount; j++) {
                     Tuple2<Integer, ArrayList<Integer>> keyValue =
                             (Tuple2<Integer, ArrayList<Integer>>) kryo.readObject(input2, Tuple2.class);
@@ -79,7 +79,7 @@ public class SerializeJavaPR extends PR {
                         joinHashMap.put(keyValue.getKey(), new Pair(keyValue.getValue() * 0.85 + 0.15, null));
                     }
                 }
-                HashMap<Integer, Double> reduceHashMap = new HashMap<>((int) (idCount / 0.75f) + 1);
+                HashMap<Integer, Double> reduceHashMap = new HashMap<Integer, Double>((int) (idCount / 0.75f) + 1);
                 for (Map.Entry<Integer, Pair> joinKeyValue : joinHashMap.entrySet()) {
                     Pair rankValue = joinKeyValue.getValue();
                     if (rankValue._1 != null && rankValue._2 != null) {

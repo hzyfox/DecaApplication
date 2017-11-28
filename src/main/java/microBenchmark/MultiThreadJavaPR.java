@@ -33,7 +33,7 @@ public class MultiThreadJavaPR extends MultiThreadPR {
             int key = entry.getKey();
             ArrayList<Integer> value = entry.getValue();
             int partitionId = key % numPartitions;
-            blocks[partitionId][blockIndices[partitionId]++] = new Tuple2<>(key, value);
+            blocks[partitionId][blockIndices[partitionId]++] = new Tuple2<Integer, ArrayList<Integer>>(key, value);
         }
     }
 
@@ -50,11 +50,13 @@ public class MultiThreadJavaPR extends MultiThreadPR {
             int[] counts = mapOutKeyCounts[partitionId];
             HashMap<Integer, Double>[] result = new HashMap[numPartitions];
             for (int i = 0; i < numPartitions; i++) {
-                result[i] = new HashMap<>(counts[i]);
+                result[i] = new HashMap<Integer, Double>(counts[i]);
             }
 
             for (int i = 0; i < block.length; i++) {
-                if (block[i] == null) break;
+                if (block[i] == null) {
+                    break;
+                }
                 ArrayList<Integer> urls = block[i]._2();
                 final double value = 1.0 / urls.size();
                 for (Integer url : urls) {
@@ -87,7 +89,7 @@ public class MultiThreadJavaPR extends MultiThreadPR {
             int count = reduceInKeyCounts[partitionId];
 
             // reduceBykey:reduce-side
-            HashMap<Integer, Double> reduceMap = new HashMap<>(count);
+            HashMap<Integer, Double> reduceMap = new HashMap<Integer, Double>(count);
             for (Map<Integer, Double> map : inMessages) {
                 for (Map.Entry<Integer, Double> entry : map.entrySet()) {
                     Integer key = entry.getKey();
@@ -100,9 +102,11 @@ public class MultiThreadJavaPR extends MultiThreadPR {
             }
 
             // join
-            HashMap<Integer, Pair> joinHashMap = new HashMap<>(count);
+            HashMap<Integer, Pair> joinHashMap = new HashMap<Integer, Pair>(count);
             for (int i = 0; i < block.length; i++) {
-                if (block[i] == null) break;
+                if (block[i] == null) {
+                    break;
+                }
                 int key = block[i]._1();
                 ArrayList<Integer> urls = block[i]._2();
                 Pair tmpJoin = new Pair(null, urls);
@@ -121,7 +125,7 @@ public class MultiThreadJavaPR extends MultiThreadPR {
             int[] counts = mapOutKeyCounts[partitionId];
             HashMap<Integer, Double>[] result = new HashMap[numPartitions];
             for (int i = 0; i < numPartitions; i++) {
-                result[i] = new HashMap<>(counts[i]);
+                result[i] = new HashMap<Integer, Double>(counts[i]);
             }
             for (Map.Entry<Integer, Pair> joinKeyValue : joinHashMap.entrySet()) {
                 Pair rankValue = joinKeyValue.getValue();
@@ -155,7 +159,7 @@ public class MultiThreadJavaPR extends MultiThreadPR {
         @Override
         public HashMap<Integer, Double> call() throws Exception {
             // reduceBykey:reduce-side
-            HashMap<Integer, Double> reduceMap = new HashMap<>(count);
+            HashMap<Integer, Double> reduceMap = new HashMap<Integer, Double>(count);
             for (Map<Integer, Double> map : inMessages) {
                 for (Map.Entry<Integer, Double> entry : map.entrySet()) {
                     Integer key = entry.getKey();

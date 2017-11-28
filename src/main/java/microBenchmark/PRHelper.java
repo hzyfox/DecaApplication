@@ -20,10 +20,6 @@ public class PRHelper {
                 pr = new JavaPR();
                 break;
             }
-            case 2: {
-                pr = new DecaNewPR();
-                break;
-            }
             case 3: {
                 pr = new SerializeJavaPR();
                 break;
@@ -47,6 +43,8 @@ public class PRHelper {
                 pr = new MultiThreadSerializeJavaPR(numCores, numPartitions);
                 break;
             }
+            default:
+                break;
         }
 
         long startTime = System.currentTimeMillis();
