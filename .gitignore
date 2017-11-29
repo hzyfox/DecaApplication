@@ -8,7 +8,8 @@
 out
 gen### Java template
 *.class
-
+*.iws
+*.ipr
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 

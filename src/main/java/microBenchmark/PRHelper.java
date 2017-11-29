@@ -58,7 +58,7 @@ public class PRHelper {
         System.out.println(pr.name + " warm-up time: " + (endTime - startTime) + "ms");
 
         triggerGC();
-
+        System.out.println(" -------------------------compute start--------------------- ");
         startTime = System.currentTimeMillis();
         pr.compute(iterations);
         endTime = System.currentTimeMillis();
