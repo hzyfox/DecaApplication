@@ -46,6 +46,7 @@ public abstract class PR {
                 }
                 tmpValueList.add(value);
             }
+            fileReader.close();
             keyCount = links.size();
             idCount = ids.cardinality();
             count += keyCount;
