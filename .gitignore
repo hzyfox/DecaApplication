@@ -8,14 +8,9 @@
 out
 gen### Java template
 *.class
-<<<<<<< HEAD
 *ipr
 *.iml
 *.iws
-=======
-*.iws
-*.ipr
->>>>>>> pr
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 

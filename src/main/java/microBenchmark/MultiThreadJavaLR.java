@@ -30,8 +30,9 @@ public class MultiThreadJavaLR extends LR {
             for (int i = 0; i < block.length; i++) {
                 double[] subgradient = new double[D];
                 DataPoint p = block[i];
-                if (p == null)
+                if (p == null) {
                     break;
+                }
                 double dot = dot(w, p.x);
                 double tmp = (1 / (1 + Math.exp(-p.y * dot)) - 1) * p.y;
                 for (int j = 0; j < D; j++) {
@@ -53,8 +54,9 @@ public class MultiThreadJavaLR extends LR {
     private DataPoint[][] cache;
     private static double[] w;
 
+    @Override
     public void textFile(int dimension, int nums) {
-        this.D = dimension;
+        D = dimension;
         this.N = nums;
 
         w = new double[D];
@@ -69,10 +71,11 @@ public class MultiThreadJavaLR extends LR {
         int cacheIndex = 0;
         for (int i = 0; i < N; i++) {
             int y;
-            if (i % 2 == 0)
+            if (i % 2 == 0) {
                 y = 0;
-            else
+            } else {
                 y = 1;
+            }
             double[] x = new double[D];
             for (int j = 0; j < D; j++) {
                 x[j] =  random.nextGaussian() + y * R;
@@ -87,6 +90,7 @@ public class MultiThreadJavaLR extends LR {
         }
     }
 
+    @Override
     public void compute(int iterations){
         executor = Executors.newFixedThreadPool(cores);
         for(int iter = 0; iter < iterations; iter ++) {
@@ -114,6 +118,7 @@ public class MultiThreadJavaLR extends LR {
 //        System.out.println(Arrays.toString(w));
     }
 
+    @Override
     public void shutdown(){
         executor.shutdown();
     }
