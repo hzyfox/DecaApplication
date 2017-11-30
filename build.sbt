@@ -13,7 +13,9 @@ libraryDependencies ++= Seq(
   "org.scalanlp" %% "breeze-viz" % "0.11.2"
 )
  assemblyMergeStrategy in assembly := {
-    case x => MergeStrategy.discard
+   case x =>
+     val oldStrategy = (assemblyMergeStrategy in assembly).value
+     oldStrategy(x)
   }
 resolvers ++= Seq(
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",

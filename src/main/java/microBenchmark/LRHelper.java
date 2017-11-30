@@ -15,7 +15,7 @@ public class LRHelper {
 
         int partitions = Integer.parseInt(args[4]);
         int cores = Integer.parseInt(args[5]);
-
+        int sysGcFlag = Integer.parseInt(args[6]); //0 donot trigger 1 trigger
         int type = Integer.parseInt(args[0]);
         String lrName = "";
 
@@ -54,8 +54,10 @@ public class LRHelper {
         endTime = System.currentTimeMillis();
         System.out.println(lrName + " warm time: " + (endTime - startTime) + "ms");
         lr.shutdown();
-        triggerGC();
-
+        if (sysGcFlag == 1) {
+            triggerGC();
+        }
+        System.out.println(" -------------------------compute start--------------------- ");
         startTime = System.currentTimeMillis();
         lr.compute(iterations);
         endTime = System.currentTimeMillis();
