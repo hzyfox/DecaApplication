@@ -41,6 +41,11 @@ public class LRHelper {
                 lrName = "MultiThreadDecaJavaLR";
                 break;
             }
+            case 6: {
+                lr = new OriginMultiThreadDecaJavaLR(partitions,cores);
+                lrName = "OriginMultiThreadDecaJavaLR";
+                break;
+            }
             default:
                 break;
         }
@@ -55,6 +60,7 @@ public class LRHelper {
         System.out.println(lrName + " warm time: " + (endTime - startTime) + "ms");
         lr.shutdown();
         if (sysGcFlag == 1) {
+
             triggerGC();
         }
         System.out.println(" -------------------------compute start--------------------- ");

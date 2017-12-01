@@ -1,6 +1,5 @@
 package microBenchmark;
 
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
@@ -31,7 +30,8 @@ public class UnsafeTest {
         long[] testLongArray = new long[]{123L, 345L, 456L};
         long longArrayOffset = unsafe.arrayBaseOffset(long[].class);
         long longArrayScale = unsafe.arrayIndexScale(long[].class);
-        System.out.println(" longArrayOffset is： " + longArrayOffset + "longArrayScale is: " + longArrayOffset);
+        long intArrayScale = unsafe.arrayIndexScale(int[].class);
+        System.out.println(" longArrayOffset is： " + longArrayOffset + "longArrayScale is: " + longArrayScale);
         System.out.println("get value array index 0: " + unsafe.getLongVolatile(testLongArray,
                 longArrayOffset));
         System.out.println("get value array index 1: " + unsafe.getLongVolatile(testLongArray,
@@ -48,10 +48,16 @@ public class UnsafeTest {
         long result = doubleIndex0 * doubleIndex1;
         System.out.println("long value is " + doubleIndex0);
         System.out.println("long value is " + doubleIndex1);
-        System.out.println("long result is "+ result);
-        System.out.println("after exchange is "+Double.longBitsToDouble(result));
+        System.out.println("long result is " + result);
+        System.out.println("after exchange is " + Double.longBitsToDouble(result));
 
-
+        long[] test = new long[1];
+        unsafe.putInt(test, longArrayOffset, 0x7);
+        System.out.println("longarrayscale is "+longArrayScale + "int array scale is: "+ intArrayScale);
+        System.out.println(Long.toBinaryString(unsafe.getLong(test, (longArrayOffset))));
+        System.out.println(Integer.toBinaryString(unsafe.getInt(test, longArrayOffset)));
+        System.out.println(Long.toBinaryString(unsafe.getLong(test, longArrayOffset)));
+        System.out.println(Integer.toBinaryString(unsafe.getInt(test, longArrayOffset + intArrayScale)));
     }
 
 

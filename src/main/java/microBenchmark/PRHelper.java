@@ -38,7 +38,13 @@ public class PRHelper {
                 pr = new MultiThreadJavaPR(numCores, numPartitions);
                 break;
             }
-            case 7: {
+            case 7:{
+                int numCores = Integer.parseInt(args[3]);
+                int numPartitions = Integer.parseInt(args[4]);
+                pr = new MultiThreadDecaPR(numCores,numPartitions);
+                break;
+            }
+            case 8: {
                 int numCores = Integer.parseInt(args[3]);
                 int numPartitions = Integer.parseInt(args[4]);
                 pr = new MultiThreadSerializeJavaPR(numCores, numPartitions);
