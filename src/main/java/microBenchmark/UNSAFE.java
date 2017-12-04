@@ -16,7 +16,7 @@ public class UNSAFE {
 
     static int INTLENGTH = 32;
 
-    static int longArrayOffset;
+    static long longArrayOffset;
 
     static {
         try {
@@ -33,17 +33,17 @@ public class UNSAFE {
         }
     }
 
-    static long allocateMemory(long size) {
+    synchronized static long allocateMemory(long size) {
         long[] allocateLong = new long[(int) (size / 8 + 1)];
         unsafeLongArray.add(allocateLong);
-        int index = unsafeLongArray.indexOf(allocateLong);
+        long index = unsafeLongArray.indexOf(allocateLong);
         //because index is not change,so index should be in higher bit
         return index << INTLENGTH | longArrayOffset;
     }
 
 
-    static void freeMemory(long adress) {
-        int index = getLongArrayIndex(adress);
+    static void freeMemory(long address) {
+        int index = getLongArrayIndex(address);
         unsafeLongArray.remove(index);
     }
 

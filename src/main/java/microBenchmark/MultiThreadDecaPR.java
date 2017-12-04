@@ -21,13 +21,19 @@ public class MultiThreadDecaPR extends MultiThreadPR {
         ////////////////////
         blocks = new IntLongMap[numPartitions];
         for (int i = 0; i < numPartitions; i++) {
+            //System.out.println("--------------idcount is " + idCount + "-----------------");
             blocks[i] = new IntLongMap(idCount);
         }
         for (Map.Entry<Integer, ArrayList<Integer>> entry : links.entrySet()) {
+            //System.out.println("cache phase:-------------" + "put partition " + entry.getKey() % numPartitions +"put key " + entry.getKey()+ "-------------------");
             blocks[entry.getKey() % numPartitions].put(entry.getKey(), entry.getValue());
         }
-
-
+        if(blocks[0].get(0)==-1){
+            //System.out.println("cache phase:--------------- get key 0 failure --------------------");
+        }
+        for (int i = 0; i < numPartitions; i++) {
+            //System.out.println("cache phase: partition " + i + "----------after cache put , kvcount is " + blocks[i].kvCount() + "-----------------------");
+        }
     }
 
     @Override
@@ -44,13 +50,14 @@ public class MultiThreadDecaPR extends MultiThreadPR {
                 e.printStackTrace();
             }
         }
-
         IntDoubleMap[][] inMessages = new IntDoubleMap[numPartitions][numPartitions];
-
         for (int i = 0; i < numPartitions; i++) {
             for (int j = 0; j < numPartitions; j++) {
                 inMessages[j][i] = outMessages[i][j];
             }
+        }
+        for (int i = 0; i < numPartitions; i++) {
+            //System.out.println("partition " + i + "----------after init task , kvcount is " + blocks[i].kvCount() + "-----------------------");
         }
         for (int iter = 1; iter < iterations; iter++) {
             for (int i = 0; i < numPartitions; i++) {
@@ -73,7 +80,6 @@ public class MultiThreadDecaPR extends MultiThreadPR {
         Future<IntDoubleMap>[] resultFutures = new Future[numPartitions];
         IntDoubleMap[] results = new IntDoubleMap[numPartitions];
 
-
         for (int i = 0; i < numPartitions; i++) {
             resultFutures[i] = executor.submit(new EndTask(i, inMessages[i]));
         }
@@ -87,8 +93,6 @@ public class MultiThreadDecaPR extends MultiThreadPR {
         for (int i = 0; i < numPartitions; i++) {
             System.out.println(results[i].toString());
         }
-
-
     }
 
     private class InitTask implements Callable<IntDoubleMap[]> {
@@ -104,7 +108,7 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             int[] counts = mapOutKeyCounts[partitionId];
             IntDoubleMap[] result = new IntDoubleMap[numPartitions];
             for (int i = 0; i < numPartitions; i++) {
-                result[i] = new IntDoubleMap(idCount);
+                result[i] = new IntDoubleMap(counts[i]);
             }
             for (int i = 0; i < block.kvCount(); i++) {
                 int key = block.orderGetKey(i);
@@ -160,10 +164,15 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             for (int i = 0; i < reduceMap.kvCount(); i++) {
                 int key = reduceMap.orderGetKey(i);
                 double value = reduceMap.orderGetValue(i);
+                if(block.get(0) ==-1){
+                    //System.out.println("iter phase: ------------" +"get key 0 failure ---------------------");
+                }
                 if (block.get(key) != -1) {
+                    //System.out.println("iter phase:-------------"+"put partition "+partitionId+" key " +key+"-------------------");
                     block.putPairDouble(block.get(key), value * 0.85 + 0.15);
                 } else {
-                    block.put(key, null);
+                    //System.out.println("iter phase partition " + partitionId + "---------inter task------ put key " + key);
+                    block.put(key, null); //2 边出现在右边 不在左边 block里面没有d
                 }
             }
             int[] counts = mapOutKeyCounts[partitionId];

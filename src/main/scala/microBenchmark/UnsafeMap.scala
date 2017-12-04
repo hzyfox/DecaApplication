@@ -18,13 +18,16 @@ abstract class UnsafeMap(val kvMaxCount: Int, val kSize: Int, val vSize: Int) {
 
   protected val baseAddress = UNSAFE.allocateMemory(kvMaxCount.toLong * (kSize + vSize))
   protected var curAddress = baseAddress
+  protected val elementNotExist: Int = -2
   protected var kvCount = 0
   protected val loadFactor = 0.75
   protected val maxProbes = 5000
   protected val capacity = nextPowerOf2((kvMaxCount / loadFactor).ceil.toLong).toInt
   protected val mask = capacity - 1
   protected var pointers = new Array[Long](capacity)
-
+  for(i<-pointers.indices){
+    pointers(i) = elementNotExist
+  }
   def numElements = kvCount
 
   def address = baseAddress
@@ -97,7 +100,7 @@ class IntDoubleMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
         return defaultValue
       } else {
         val pointer = pointers(pos)
@@ -114,7 +117,7 @@ class IntDoubleMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
         insert(pos, key, value)
         return
       } else {
@@ -176,7 +179,7 @@ class IntLongMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
         return defaultValue
       } else {
         val pointer = pointers(pos)
@@ -193,7 +196,8 @@ class IntLongMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
+        System.out.println("===============insert key "+key+" pos is"+pos+ "===================")
         insert(pos, key, valueList)
         return
       } else {
@@ -225,10 +229,13 @@ class IntLongMap(kvMaxCount: Int)
 
   private def insert(pos: Int, key: Int, valueList: ArrayList[Integer]) {
     //    println(s"put at $pos")
-    if (kvCount == kvMaxCount)
+    if (kvCount == kvMaxCount) {
+      println("kvcount is "+ kvCount+ "key is" + key + "pos is " + pos + "kvmaxCount is " + kvMaxCount)
       throw new UnsupportedOperationException
+    }
     kvCount += 1
     pointers(pos) = curAddress
+    System.out.println("===============key "+key +"curAdress is "+ curAddress+"================");
     UNSAFE.putInt(curAddress, key)
     curAddress += kSize
     //写堆外
@@ -247,8 +254,6 @@ class IntLongMap(kvMaxCount: Int)
     }
 
     //end
-
-
     UNSAFE.putLong(curAddress, vlAddress)
     curAddress += vSize
   }
@@ -307,7 +312,7 @@ class IntPairMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
         return defaultValue1
       } else {
         val pointer = pointers(pos)
@@ -324,7 +329,7 @@ class IntPairMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
         return defaultValue2
       } else {
         val pointer = pointers(pos)
@@ -341,7 +346,7 @@ class IntPairMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
         insert(pos, key, value1, defaultValue2)
         return
       } else {
@@ -361,7 +366,7 @@ class IntPairMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
         insert(pos, key, defaultValue2, value2)
         return
       } else {
@@ -381,7 +386,7 @@ class IntPairMap(kvMaxCount: Int)
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
-      if (pointers(pos) == 0) {
+      if (pointers(pos) == elementNotExist) {
         insert(pos, key, value1, value2)
         return
       } else {
