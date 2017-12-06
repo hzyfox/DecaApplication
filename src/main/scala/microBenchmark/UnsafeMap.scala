@@ -25,9 +25,10 @@ abstract class UnsafeMap(val kvMaxCount: Int, val kSize: Int, val vSize: Int) {
   protected val capacity = nextPowerOf2((kvMaxCount / loadFactor).ceil.toLong).toInt
   protected val mask = capacity - 1
   protected var pointers = new Array[Long](capacity)
-  for(i<-pointers.indices){
+  for (i <- pointers.indices) {
     pointers(i) = elementNotExist
   }
+
   def numElements = kvCount
 
   def address = baseAddress
@@ -50,23 +51,26 @@ abstract class UnsafeMap(val kvMaxCount: Int, val kSize: Int, val vSize: Int) {
   }
 }
 
-class IntIntArrayMap(size: Long) {
-
-  protected val address = UNSAFE.allocateMemory(size * 4)
+class IntIntArrayMap(keysize: Long, arrayListSize: Long) {
+  /*for every IntIntArray element:  the 0th element is rank and the 1th is the len and  then the arraylist*/
+  protected val address: Long = UNSAFE.allocateMemory(keysize  * 12 + arrayListSize * 4 )
   protected var curAddress: Long = address
-  protected var scanAddress: Long = address
-  protected val lengths = new util.ArrayList[Integer]()
+  protected val addressRecorder = new util.HashMap[Integer, Long]((keysize.toInt / 0.75).toInt)
 
-  def resetScanAddress(): Unit = {
-    this.scanAddress = address
+  def getKeyAddress(key: Int): Long = {
+    return addressRecorder.get(key)
   }
 
-  def getLengths(): util.ArrayList[Integer] = {
-    this.lengths
-  }
 
   def putKV(key: Int, valueList: util.ArrayList[Integer]): Unit = {
-    UNSAFE.putInt(curAddress, key)
+    addressRecorder.put(key, curAddress)
+    UNSAFE.putDouble(curAddress, -1.0)
+    curAddress += 8
+    if (valueList != null) {
+      UNSAFE.putInt(curAddress, valueList.size())
+    } else {
+      UNSAFE.putInt(curAddress, 0)
+    }
     curAddress += 4
     var i = 0;
     val vl = valueList.size()
@@ -75,21 +79,9 @@ class IntIntArrayMap(size: Long) {
       i += 1
       curAddress += 4
     }
-    lengths.add(valueList.size())
+
   }
 
-  def getkey(): Int = {
-    scanAddress += 4
-    UNSAFE.getInt(scanAddress - 4)
-  }
-
-  def getValue(index: Int, length: Long): Int = {
-    val r = UNSAFE.getInt(scanAddress + index * 4)
-    if (index == (length - 1)) {
-      scanAddress += length * 4
-    }
-    r
-  }
 }
 
 class IntDoubleMap(kvMaxCount: Int)
@@ -192,72 +184,32 @@ class IntLongMap(kvMaxCount: Int)
     throw new UnsupportedOperationException
   }
 
-  def put(key: Int, valueList: ArrayList[Integer]): Unit = {
+
+  def put(key: Int, intintArrayRecorder: IntIntArrayMap): Unit = {
     var pos = key & mask
     var step = 1
     while (step < maxProbes) {
       if (pointers(pos) == elementNotExist) {
-        //System.out.println("===============insert key "+key+" pos is"+pos+ "===================")
-        insert(pos, key, valueList)
+        insert(pos, key, intintArrayRecorder)
         return
       } else {
-        val pointer = pointers(pos)
-        if (UNSAFE.getInt(pointer) == key) {
-          val vlLength = if (valueList == null) {
-            0
-          } else {
-            valueList.size()
-          }
-          val vlAddress = UNSAFE.allocateMemory((vlLength + 1) * 4 + 8)
-          UNSAFE.putDouble(vlAddress, -1.0)
-          UNSAFE.putInt(vlAddress + 8, vlLength)
-          var i = 0;
-          while (i < vlLength) {
-            UNSAFE.putInt(vlAddress + 12 + i * 4, valueList.get(i))
-            i += 1
-          }
-
-          UNSAFE.putLong(pointer + kSize, vlAddress)
-          return
-        }
+        pos = (pos + step) & mask
+        step += 1
       }
-      pos = (pos + step) & mask
-      step += 1
     }
-    throw new UnsupportedOperationException
+
   }
 
-  private def insert(pos: Int, key: Int, valueList: ArrayList[Integer]) {
-    //    println(s"put at $pos")
-    if (kvCount == kvMaxCount) {
-      //println("kvcount is "+ kvCount+ "key is" + key + "pos is " + pos + "kvmaxCount is " + kvMaxCount)
-      throw new UnsupportedOperationException
-    }
-    kvCount += 1
+  def insert(pos: Int, key: Int, intintArrayRecorder: IntIntArrayMap): Unit = {
+    kvCount+=1
     pointers(pos) = curAddress
-
     UNSAFE.putInt(curAddress, key)
     curAddress += kSize
-    //写堆外
-    val vlLength = if (valueList == null) {
-      0
-    } else {
-      valueList.size()
-    }
-    val vlAddress = UNSAFE.allocateMemory((vlLength + 1) * 4 + 8)
-    //System.out.println("===============key "+key +"curAdress is "+ curAddress+" vlAddress is "+vlAddress+"================");
-    UNSAFE.putDouble(vlAddress, -1.0)
-    UNSAFE.putInt(vlAddress + 8, vlLength)
-    var i = 0;
-    while (i < vlLength) {
-      UNSAFE.putInt(vlAddress + 12 + i * 4, valueList.get(i))
-      i += 1
-    }
-
-    //end
-    UNSAFE.putLong(curAddress, vlAddress)
+    UNSAFE.putLong(curAddress, intintArrayRecorder.getKeyAddress(key))
     curAddress += vSize
   }
+
+
 
   def orderGetKey(index: Int): Int = {
     UNSAFE.getInt(address + 12 * index)
@@ -420,7 +372,7 @@ class IntPairMap(kvMaxCount: Int)
 
 
 object UnsafeMap {
-//  final val UNSAFE = {
+  //  final val UNSAFE = {
   //    val unsafeField = classOf[sun.misc.Unsafe].getDeclaredField("theUnsafe")
   //    unsafeField.setAccessible(true)
   //    unsafeField.get().asInstanceOf[sun.misc.Unsafe]

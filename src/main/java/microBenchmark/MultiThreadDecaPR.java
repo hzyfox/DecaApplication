@@ -18,22 +18,20 @@ public class MultiThreadDecaPR extends MultiThreadPR {
     @Override
     protected void cache(Map<Integer, ArrayList<Integer>> links) {
         super.cache(links);
-        UNSAFE.unsafeLongArray = new HashMap<Integer, long[]>((int)(keyCount*1.5));
+        UNSAFE.unsafeLongArray = new HashMap<Integer, long[]>((int) (keyCount * 1.5));
         ////////////////////
         blocks = new IntLongMap[numPartitions];
+        int countArrayListSize = 0;
         for (int i = 0; i < numPartitions; i++) {
-            //System.out.println("--------------idcount is " + idCount + "-----------------");
             blocks[i] = new IntLongMap(reduceInKeyCounts[i]);
         }
         for (Map.Entry<Integer, ArrayList<Integer>> entry : links.entrySet()) {
-            //System.out.println("cache phase:-------------" + "put partition " + entry.getKey() % numPartitions +"put key " + entry.getKey()+ "-------------------");
-            blocks[entry.getKey() % numPartitions].put(entry.getKey(), entry.getValue());
+            countArrayListSize += entry.getValue().size();
         }
-        if (blocks[0].get(0) == -1) {
-            //System.out.println("cache phase:--------------- get key 0 failure --------------------");
-        }
-        for (int i = 0; i < numPartitions; i++) {
-            //System.out.println("cache phase: partition " + i + "----------after cache put , kvcount is " + blocks[i].kvCount() + "-----------------------");
+        IntIntArrayMap intintArrayMap = new IntIntArrayMap(links.size(), countArrayListSize);
+        for (Map.Entry<Integer, ArrayList<Integer>> entry : links.entrySet()) {
+            intintArrayMap.putKV(entry.getKey(),entry.getValue());
+            blocks[entry.getKey() % numPartitions].put(entry.getKey(), intintArrayMap);
         }
     }
 
@@ -95,14 +93,16 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             System.out.println(results[i].toString());
         }
     }
-    private void free2DimensionMap(UnsafeMap[][]unsafeMaps){
+
+    private void free2DimensionMap(UnsafeMap[][] unsafeMaps) {
         for (int i = 0; i < unsafeMaps.length; i++) {
             for (int i1 = 0; i1 < unsafeMaps[i].length; i1++) {
                 unsafeMaps[i][i1].free();
             }
         }
     }
-    private void free1DimensionMap(UnsafeMap[] unsafeMaps){
+
+    private void free1DimensionMap(UnsafeMap[] unsafeMaps) {
         for (int i = 0; i < unsafeMaps.length; i++) {
             unsafeMaps[i].free();
         }
@@ -189,7 +189,7 @@ public class MultiThreadDecaPR extends MultiThreadPR {
                     block.putPairDouble(block.get(key), value * 0.85 + 0.15);
                 } else {
                     //System.out.println("iter phase partition " + partitionId + "---------inter task------ put key " + key);
-                    block.put(key, null); //2 边出现在右边 不在左边 block里面没有d
+                    //block.put(key, null); //2 边出现在右边 不在左边 block里面没有d
                 }
             }
             reduceMap.free();
@@ -205,8 +205,8 @@ public class MultiThreadDecaPR extends MultiThreadPR {
                 int key = block.orderGetKey(i);
                 long vlAddress = block.orderGetValue(i);
 
-                if (block.getPairDouble(vlAddress) != -1.0 &&
-                        block.getPairVLLength(vlAddress) != 0) {
+                if (vlAddress != -1 && block.getPairDouble(vlAddress) != -1.0 &&
+                        block.getPairVLLength(vlAddress) != 0 ) {
                     double dv = block.getPairDouble(vlAddress);
                     int vlLength = block.getPairVLLength(vlAddress);
                     final double value = dv / vlLength;
