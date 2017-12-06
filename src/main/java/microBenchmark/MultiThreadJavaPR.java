@@ -227,9 +227,9 @@ public class MultiThreadJavaPR extends MultiThreadPR {
             }
         }
 
-//        for (int i = 0; i < numPartitions; i++) {
-//            System.out.println(results[i]);
-//        }
+        for (int i = 0; i < numPartitions; i++) {
+            System.out.println(results[i]);
+        }
     }
 
 }

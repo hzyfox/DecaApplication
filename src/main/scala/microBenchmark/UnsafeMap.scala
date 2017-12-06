@@ -197,7 +197,7 @@ class IntLongMap(kvMaxCount: Int)
     var step = 1
     while (step < maxProbes) {
       if (pointers(pos) == elementNotExist) {
-        System.out.println("===============insert key "+key+" pos is"+pos+ "===================")
+        //System.out.println("===============insert key "+key+" pos is"+pos+ "===================")
         insert(pos, key, valueList)
         return
       } else {
@@ -230,12 +230,12 @@ class IntLongMap(kvMaxCount: Int)
   private def insert(pos: Int, key: Int, valueList: ArrayList[Integer]) {
     //    println(s"put at $pos")
     if (kvCount == kvMaxCount) {
-      println("kvcount is "+ kvCount+ "key is" + key + "pos is " + pos + "kvmaxCount is " + kvMaxCount)
+      //println("kvcount is "+ kvCount+ "key is" + key + "pos is " + pos + "kvmaxCount is " + kvMaxCount)
       throw new UnsupportedOperationException
     }
     kvCount += 1
     pointers(pos) = curAddress
-    System.out.println("===============key "+key +"curAdress is "+ curAddress+"================");
+
     UNSAFE.putInt(curAddress, key)
     curAddress += kSize
     //写堆外
@@ -245,6 +245,7 @@ class IntLongMap(kvMaxCount: Int)
       valueList.size()
     }
     val vlAddress = UNSAFE.allocateMemory((vlLength + 1) * 4 + 8)
+    //System.out.println("===============key "+key +"curAdress is "+ curAddress+" vlAddress is "+vlAddress+"================");
     UNSAFE.putDouble(vlAddress, -1.0)
     UNSAFE.putInt(vlAddress + 8, vlLength)
     var i = 0;

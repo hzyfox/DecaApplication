@@ -1,6 +1,7 @@
 package microBenchmark;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -17,18 +18,18 @@ public class MultiThreadDecaPR extends MultiThreadPR {
     @Override
     protected void cache(Map<Integer, ArrayList<Integer>> links) {
         super.cache(links);
-
+        UNSAFE.unsafeLongArray = new HashMap<Integer, long[]>((int)(keyCount*1.5));
         ////////////////////
         blocks = new IntLongMap[numPartitions];
         for (int i = 0; i < numPartitions; i++) {
             //System.out.println("--------------idcount is " + idCount + "-----------------");
-            blocks[i] = new IntLongMap(idCount);
+            blocks[i] = new IntLongMap(reduceInKeyCounts[i]);
         }
         for (Map.Entry<Integer, ArrayList<Integer>> entry : links.entrySet()) {
             //System.out.println("cache phase:-------------" + "put partition " + entry.getKey() % numPartitions +"put key " + entry.getKey()+ "-------------------");
             blocks[entry.getKey() % numPartitions].put(entry.getKey(), entry.getValue());
         }
-        if(blocks[0].get(0)==-1){
+        if (blocks[0].get(0) == -1) {
             //System.out.println("cache phase:--------------- get key 0 failure --------------------");
         }
         for (int i = 0; i < numPartitions; i++) {
@@ -79,7 +80,6 @@ public class MultiThreadDecaPR extends MultiThreadPR {
 
         Future<IntDoubleMap>[] resultFutures = new Future[numPartitions];
         IntDoubleMap[] results = new IntDoubleMap[numPartitions];
-
         for (int i = 0; i < numPartitions; i++) {
             resultFutures[i] = executor.submit(new EndTask(i, inMessages[i]));
         }
@@ -90,10 +90,24 @@ public class MultiThreadDecaPR extends MultiThreadPR {
                 e.printStackTrace();
             }
         }
+
         for (int i = 0; i < numPartitions; i++) {
             System.out.println(results[i].toString());
         }
     }
+    private void free2DimensionMap(UnsafeMap[][]unsafeMaps){
+        for (int i = 0; i < unsafeMaps.length; i++) {
+            for (int i1 = 0; i1 < unsafeMaps[i].length; i1++) {
+                unsafeMaps[i][i1].free();
+            }
+        }
+    }
+    private void free1DimensionMap(UnsafeMap[] unsafeMaps){
+        for (int i = 0; i < unsafeMaps.length; i++) {
+            unsafeMaps[i].free();
+        }
+    }
+
 
     private class InitTask implements Callable<IntDoubleMap[]> {
         int partitionId;
@@ -104,6 +118,7 @@ public class MultiThreadDecaPR extends MultiThreadPR {
 
         @Override
         public IntDoubleMap[] call() throws Exception {
+            //System.out.println("--------进入call---------");
             IntLongMap block = blocks[partitionId];
             int[] counts = mapOutKeyCounts[partitionId];
             IntDoubleMap[] result = new IntDoubleMap[numPartitions];
@@ -113,7 +128,9 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             for (int i = 0; i < block.kvCount(); i++) {
                 int key = block.orderGetKey(i);
                 long vlAddress = block.orderGetValue(i);
+                //System.out.printf("--------get key %d address %d---------\n",key,vlAddress);
                 int vlLength = block.getPairVLLength(vlAddress);
+                //System.out.printf("--------get key ---------\n");
                 final double value = 1.0 / vlLength;
                 for (int j = 0; j < vlLength; j++) {
                     int url = block.getPairVlValue(vlAddress, j);
@@ -128,8 +145,8 @@ public class MultiThreadDecaPR extends MultiThreadPR {
 
             }
 
-
-            return result;
+            /*result[i] = new IntDoubleMap(counts[i]);*/
+            return result; //每个block是一个[(key,arraylist),(key,arraylist)]，按key hash 分 partition。而arraylist里面的key值也按key hash 分partition
 
         }
     }
@@ -148,8 +165,8 @@ public class MultiThreadDecaPR extends MultiThreadPR {
         public IntDoubleMap[] call() throws Exception {
             IntLongMap block = blocks[partitionId];
             int count = reduceInKeyCounts[partitionId];
-
-            IntDoubleMap reduceMap = new IntDoubleMap(count);
+            /*reduce 作为参数传进来 减少局部变量*/
+            IntDoubleMap reduceMap = new IntDoubleMap(count); //中间对象，用于存放每个partition的reducemap
 
             for (IntDoubleMap inMessage : inMessages) {
                 for (int i = 0; i < inMessage.kvCount(); i++) {
@@ -164,7 +181,7 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             for (int i = 0; i < reduceMap.kvCount(); i++) {
                 int key = reduceMap.orderGetKey(i);
                 double value = reduceMap.orderGetValue(i);
-                if(block.get(0) ==-1){
+                if (block.get(0) == -1) {
                     //System.out.println("iter phase: ------------" +"get key 0 failure ---------------------");
                 }
                 if (block.get(key) != -1) {
@@ -175,7 +192,10 @@ public class MultiThreadDecaPR extends MultiThreadPR {
                     block.put(key, null); //2 边出现在右边 不在左边 block里面没有d
                 }
             }
+            reduceMap.free();
+            free1DimensionMap(inMessages);
             int[] counts = mapOutKeyCounts[partitionId];
+
             IntDoubleMap[] result = new IntDoubleMap[numPartitions];
             for (int i = 0; i < numPartitions; i++) {
                 result[i] = new IntDoubleMap(counts[i]);
@@ -219,7 +239,7 @@ public class MultiThreadDecaPR extends MultiThreadPR {
 
         @Override
         public IntDoubleMap call() throws Exception {
-            IntDoubleMap reduceMap = new IntDoubleMap(idCount);
+            IntDoubleMap reduceMap = new IntDoubleMap(reduceInKeyCounts[partitionId]);
             for (IntDoubleMap inMessage : inMessages) {
                 for (int i = 0; i < inMessage.kvCount(); i++) {
                     int k = (int) inMessage.orderGetKey(i);

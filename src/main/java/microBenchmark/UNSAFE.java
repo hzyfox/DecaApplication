@@ -3,17 +3,17 @@ package microBenchmark;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * create with microBenchmark
  * USER: husterfox
  */
 public class UNSAFE {
-    static ArrayList<long[]> unsafeLongArray = new ArrayList<long[]>();
+    static HashMap<Integer, long[]> unsafeLongArray;
     static Field unsafeField = null;
     static Unsafe unsafe = null;
-
+    static int longArrayIndex = 0;
     static int INTLENGTH = 32;
 
     static long longArrayOffset;
@@ -35,10 +35,11 @@ public class UNSAFE {
 
     synchronized static long allocateMemory(long size) {
         long[] allocateLong = new long[(int) (size / 8 + 1)];
-        unsafeLongArray.add(allocateLong);
-        long index = unsafeLongArray.indexOf(allocateLong);
+        unsafeLongArray.put(longArrayIndex, allocateLong);
+
         //because index is not change,so index should be in higher bit
-        return index << INTLENGTH | longArrayOffset;
+        //不转型为long 左移32位将永远为0
+        return (long) longArrayIndex++ << INTLENGTH | longArrayOffset;
     }
 
 
