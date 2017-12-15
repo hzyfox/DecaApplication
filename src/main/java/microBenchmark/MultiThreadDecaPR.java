@@ -29,6 +29,7 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             countArrayListSize += entry.getValue().size();
         }
         IntIntArrayMap intintArrayMap = new IntIntArrayMap(links.size(), countArrayListSize);
+
         for (Map.Entry<Integer, ArrayList<Integer>> entry : links.entrySet()) {
             intintArrayMap.putKV(entry.getKey(),entry.getValue());
             blocks[entry.getKey() % numPartitions].put(entry.getKey(), intintArrayMap);
@@ -89,9 +90,9 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             }
         }
 
-        for (int i = 0; i < numPartitions; i++) {
-            System.out.println(results[i].toString());
-        }
+//        for (int i = 0; i < numPartitions; i++) {
+//            System.out.println(results[i].toString());
+//        }
     }
 
     private void free2DimensionMap(UnsafeMap[][] unsafeMaps) {
@@ -107,7 +108,7 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             unsafeMaps[i].free();
         }
     }
-
+    
 
     private class InitTask implements Callable<IntDoubleMap[]> {
         int partitionId;

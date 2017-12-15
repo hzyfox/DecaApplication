@@ -6,7 +6,6 @@ package microBenchmark
   */
 
 import java.util
-import java.util.ArrayList
 
 
 /**
@@ -52,41 +51,84 @@ abstract class UnsafeMap(val kvMaxCount: Int, val kSize: Int, val vSize: Int) {
 }
 
 class IntIntArrayMap(keysize: Long, arrayListSize: Long) {
-  /*for every IntIntArray element:  the 0th element is rank and the 1th is the len and  then the arraylist*/
-  protected val address: Long = UNSAFE.allocateMemory(keysize  * 12 + arrayListSize * 4 )
-  protected var curAddress: Long = address
-  protected val addressRecorder = new util.HashMap[Integer, Long]((keysize.toInt / 0.75).toInt)
 
-  def getKeyAddress(key: Int): Long = {
-    return addressRecorder.get(key)
+  import microBenchmark.UnsafeMap._
+
+  /*for every IntIntArray element:  the 0th element is rank and the 1th is the len,the 2th is key and  then the arraylist*/
+  protected val address: Long = UNSAFE.allocateMemory(keysize * 16 + arrayListSize * 4)
+  protected var curAddress: Long = address
+  protected val loadFactor = 0.75
+  protected val initPointers: Int = -2
+  val keyNotFound = -1
+  protected val maxProbes = 5000
+  protected val capacity = nextPowerOf2((keysize / loadFactor).ceil.toLong).toInt
+  protected val mask = capacity - 1
+  protected var pointers = new Array[Long](capacity)
+  for (i <- pointers.indices) {
+    pointers(i) = initPointers
   }
 
+  def getKeyAddress(key: Int): Long = {
+    var pos = key & mask
+    var step = 1
+    while (step < maxProbes) {
+      if (pointers(pos) == initPointers) {
+        return keyNotFound
+      } else {
+        val pointer = pointers(pos)
+        if (UNSAFE.getInt(pointer + 12) == key){
+          return pointer
+        }
+      }
+      pos = (pos + step) & mask
+      step += 1
+    }
+    keyNotFound
+  }
+
+  def free(): Unit = {
+    pointers = null
+    UNSAFE.freeMemory(address)
+    curAddress = 0L
+  }
 
   def putKV(key: Int, valueList: util.ArrayList[Integer]): Unit = {
-    addressRecorder.put(key, curAddress)
-    UNSAFE.putDouble(curAddress, -1.0)
-    curAddress += 8
-    if (valueList != null) {
-      UNSAFE.putInt(curAddress, valueList.size())
-    } else {
-      UNSAFE.putInt(curAddress, 0)
+    var pos = key & mask
+    var step = 1
+    while (step < maxProbes) {
+      if (pointers(pos) == initPointers) {
+        pointers(pos) = curAddress
+        UNSAFE.putDouble(curAddress, -1.0)
+        curAddress += 8
+        if (valueList != null) {
+          UNSAFE.putInt(curAddress, valueList.size())
+        } else {
+          UNSAFE.putInt(curAddress, 0)
+        }
+        curAddress += 4
+        UNSAFE.putInt(curAddress, key)
+        curAddress += 4
+        var i = 0;
+        val vl = valueList.size()
+        while (i < vl) {
+          UNSAFE.putInt(curAddress, valueList.get(i))
+          i += 1
+          curAddress += 4
+        }
+        return
+      } else {
+        pos = (pos + step) & mask
+        step += 1
+      }
     }
-    curAddress += 4
-    var i = 0;
-    val vl = valueList.size()
-    while (i < vl) {
-      UNSAFE.putInt(curAddress, valueList.get(i))
-      i += 1
-      curAddress += 4
-    }
-
+      throw new UnsupportedOperationException
   }
 
 }
 
 class IntDoubleMap(kvMaxCount: Int)
   extends UnsafeMap(kvMaxCount, 4, 8) {
-  val defaultValue = -1.0
+  val defaultValue: Double = -1.0
 
   def get(key: Int): Double = {
     var pos = key & mask
@@ -201,38 +243,59 @@ class IntLongMap(kvMaxCount: Int)
   }
 
   def insert(pos: Int, key: Int, intintArrayRecorder: IntIntArrayMap): Unit = {
-    kvCount+=1
+    kvCount += 1
     pointers(pos) = curAddress
     UNSAFE.putInt(curAddress, key)
     curAddress += kSize
-    UNSAFE.putLong(curAddress, intintArrayRecorder.getKeyAddress(key))
+    /*long指向IntIntArrayMap中的结构*/
+    val keyAddress = intintArrayRecorder.getKeyAddress(key)
+    if(keyAddress == intintArrayRecorder.keyNotFound){
+      throw new UnsupportedOperationException
+    }
+    UNSAFE.putLong(curAddress, keyAddress)
     curAddress += vSize
   }
 
-
-
+  /*
+  获取Intlong数组的中的int==》key
+   */
   def orderGetKey(index: Int): Int = {
     UNSAFE.getInt(address + 12 * index)
   }
 
+  /*
+ 获取Intlong数组的中的long ==》address
+  */
   def orderGetValue(index: Int): Long = {
     UNSAFE.getLong(address + 12 * index + 4)
   }
 
+  /*
+  往long指向的地址put rank
+   */
   def putPairDouble(vladdress: Long, value: Double): Unit = {
     UNSAFE.putDouble(vladdress, value)
   }
 
+  /*
+  get long指向地址的rank
+   */
   def getPairDouble(vlAddress: Long): Double = {
     UNSAFE.getDouble(vlAddress)
   }
 
+  /*
+  获取long指向地址的arraylist长度
+   */
   def getPairVLLength(vlAddress: Long): Int = {
     UNSAFE.getInt(vlAddress + 8)
   }
 
+  /*
+  按arraylist下标获取long指向地址中arraylist的元素
+   */
   def getPairVlValue(vlAddress: Long, index: Int): Int = {
-    UNSAFE.getInt(vlAddress + 12 + index * 4)
+    UNSAFE.getInt(vlAddress + 16 + index * 4)
   }
 
   override def toString: String = {

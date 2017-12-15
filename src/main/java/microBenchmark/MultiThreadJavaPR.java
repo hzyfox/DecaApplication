@@ -50,6 +50,7 @@ public class MultiThreadJavaPR extends MultiThreadPR {
             int[] counts = mapOutKeyCounts[partitionId];
             HashMap<Integer, Double>[] result = new HashMap[numPartitions];
             for (int i = 0; i < numPartitions; i++) {
+                /*temp var 占用key那么多*/
                 result[i] = new HashMap<Integer, Double>(counts[i]);
             }
 
@@ -227,9 +228,9 @@ public class MultiThreadJavaPR extends MultiThreadPR {
             }
         }
 
-        for (int i = 0; i < numPartitions; i++) {
-            System.out.println(results[i]);
-        }
+//        for (int i = 0; i < numPartitions; i++) {
+//            System.out.println(results[i]);
+//        }
     }
 
 }
