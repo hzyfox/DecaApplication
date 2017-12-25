@@ -89,10 +89,9 @@ public class MultiThreadDecaPR extends MultiThreadPR {
                 e.printStackTrace();
             }
         }
-
-//        for (int i = 0; i < numPartitions; i++) {
-//            System.out.println(results[i].toString());
-//        }
+        for (int i = 0; i < numPartitions; i++) {
+            System.out.println(results[i].toString());
+        }
     }
 
     private void free2DimensionMap(UnsafeMap[][] unsafeMaps) {
@@ -108,7 +107,7 @@ public class MultiThreadDecaPR extends MultiThreadPR {
             unsafeMaps[i].free();
         }
     }
-    
+
 
     private class InitTask implements Callable<IntDoubleMap[]> {
         int partitionId;
