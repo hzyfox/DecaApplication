@@ -10,12 +10,12 @@ import java.util.HashMap;
  * USER: husterfox
  */
 public class UNSAFE {
-    static HashMap<Integer, long[]> unsafeLongArray;
+    static HashMap<Integer, long[]> unsafeLongArray = new HashMap<Integer, long[]>();
     static Field unsafeField = null;
     static Unsafe unsafe = null;
     static int longArrayIndex = 0;
     static int INTLENGTH = 32;
-    static int kind = 1; //0 use sun Unsafe 1 use self Unsafe
+    static int kind = 0; //0 use sun Unsafe 1 use self Unsafe
     static long longArrayOffset;
 
     static {

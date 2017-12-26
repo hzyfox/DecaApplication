@@ -18,7 +18,6 @@ public class MultiThreadDecaPR extends MultiThreadPR {
     @Override
     protected void cache(Map<Integer, ArrayList<Integer>> links) {
         super.cache(links);
-        UNSAFE.unsafeLongArray = new HashMap<Integer, long[]>((int) (keyCount * 1.5));
         ////////////////////
         blocks = new IntLongMap[numPartitions];
         int countArrayListSize = 0;
