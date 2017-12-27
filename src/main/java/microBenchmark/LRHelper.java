@@ -16,6 +16,8 @@ public class LRHelper {
         int partitions = Integer.parseInt(args[4]);
         int cores = Integer.parseInt(args[5]);
         int sysGcFlag = Integer.parseInt(args[6]); //0 donot trigger 1 trigger
+        int kind = Integer.parseInt(args[7]);
+        UNSAFE.kind = kind;
         int type = Integer.parseInt(args[0]);
         String lrName = "";
 
@@ -42,7 +44,7 @@ public class LRHelper {
                 break;
             }
             case 6: {
-                lr = new OriginMultiThreadDecaJavaLR(partitions,cores);
+                lr = new OriginMultiThreadDecaJavaLR(partitions, cores);
                 lrName = "OriginMultiThreadDecaJavaLR";
                 break;
             }

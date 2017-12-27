@@ -1,0 +1,3 @@
+add kind paremeter and print result parameter in PRHelper
+add ArrayList as Memory pool to instead HashMap, but multiply thread exist fatal error in both ArrayList and HashMap
+

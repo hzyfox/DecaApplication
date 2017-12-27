@@ -15,7 +15,7 @@ import java.util.TreeMap;
  * Created by luluorta on 16-4-11.
  */
 public abstract class PR {
-
+    public static int printResult = -1;
     public String name;
     protected int count = 0;
     protected int keyCount = 0;

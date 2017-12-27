@@ -76,7 +76,7 @@ class IntIntArrayMap(keysize: Long, arrayListSize: Long) {
         return keyNotFound
       } else {
         val pointer = pointers(pos)
-        if (UNSAFE.getInt(pointer + 12) == key){
+        if (UNSAFE.getInt(pointer + 12) == key) {
           return pointer
         }
       }
@@ -87,9 +87,9 @@ class IntIntArrayMap(keysize: Long, arrayListSize: Long) {
   }
 
   def free(): Unit = {
-    pointers = null
-    UNSAFE.freeMemory(address)
-    curAddress = 0L
+      pointers = null
+      UNSAFE.freeMemory(address)
+      curAddress = 0L
   }
 
   def putKV(key: Int, valueList: util.ArrayList[Integer]): Unit = {
@@ -121,7 +121,7 @@ class IntIntArrayMap(keysize: Long, arrayListSize: Long) {
         step += 1
       }
     }
-      throw new UnsupportedOperationException
+    throw new UnsupportedOperationException
   }
 
 }
@@ -249,7 +249,7 @@ class IntLongMap(kvMaxCount: Int)
     curAddress += kSize
     /*long指向IntIntArrayMap中的结构*/
     val keyAddress = intintArrayRecorder.getKeyAddress(key)
-    if(keyAddress == intintArrayRecorder.keyNotFound){
+    if (keyAddress == intintArrayRecorder.keyNotFound) {
       throw new UnsupportedOperationException
     }
     UNSAFE.putLong(curAddress, keyAddress)

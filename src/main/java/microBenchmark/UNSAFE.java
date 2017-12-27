@@ -3,6 +3,7 @@ package microBenchmark;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -10,12 +11,20 @@ import java.util.HashMap;
  * USER: husterfox
  */
 public class UNSAFE {
-    static HashMap<Integer, long[]> unsafeLongArray = new HashMap<Integer, long[]>();
+    static HashMap<Integer, long[]> unsafeLongArray = new HashMap<Integer, long[]>(200);
+    /**
+     * use ArrayList can not support remove element，or will cause the index change.
+     */
+    static ArrayList<long[]> unsafeLongArrayList = new ArrayList<long[]>(200);
     static Field unsafeField = null;
     static Unsafe unsafe = null;
     static int longArrayIndex = 0;
     static int INTLENGTH = 32;
-    static int kind = 0; //0 use sun Unsafe 1 use self Unsafe
+    /**
+     * kind will be Assigned in PRHelper
+     * 0 use sun Unsafe ||1 use HashMap self Unsafe || 2 use ArrayList self Unsafe
+     */
+    static int kind;
     static long longArrayOffset;
 
     static {
@@ -35,40 +44,57 @@ public class UNSAFE {
 
     synchronized static long allocateMemory(long size) {
         if (kind == 0) {
-            return unsafe.allocateMemory(size);
+            throw new RuntimeException("This is only for test in JVM sun Unsafe, uncomment the next comment");
+            //return unsafe.allocateMemory(size);
         } else {
             if (kind == 1) {
                 long[] allocateLong = new long[(int) (size / 8 + 1)];
                 unsafeLongArray.put(longArrayIndex, allocateLong);
-
+                long address = (long) longArrayIndex << INTLENGTH | longArrayOffset;
+                longArrayIndex += 1;
                 //because index is not change,so index should be in higher bit
                 //不转型为long 左移32位将永远为0
-                return (long) longArrayIndex++ << INTLENGTH | longArrayOffset;
+                return address;
             } else {
-                throw new RuntimeException("unsupported kind " + kind);
+                if (kind == 2) {
+                    long[] allocateLong = new long[(int) (size / 8 + 1)];
+                    unsafeLongArrayList.add(allocateLong);
+                    int index = unsafeLongArrayList.indexOf(allocateLong);
+                    return (long) index << INTLENGTH | longArrayOffset;
+                } else {
+                    throw new RuntimeException("unsupported kind " + kind);
+                }
             }
         }
     }
 
 
-    static void freeMemory(long address) {
+    synchronized static void freeMemory(long address) {
         if (kind == 0) {
-            unsafe.freeMemory(address);
+            throw new RuntimeException("This is only for test in JVM sun Unsafe, uncomment the next comment");
+            //unsafe.freeMemory(address);
         } else {
             if (kind == 1) {
                 int index = getLongArrayIndex(address);
                 unsafeLongArray.remove(index);
             } else {
-                throw new RuntimeException("unsupported kind " + kind);
+                if (kind == 2) {
+                    int index = getLongArrayIndex(address);
+                    unsafeLongArrayList.add(index, new long[]{-1});
+                    System.out.printf("remove length is %d\n",unsafeLongArrayList.remove(index + 1).length);
+                } else {
+                    throw new RuntimeException("unsupported kind " + kind);
+                }
             }
         }
     }
 
     static void putInt(long address, int value) {
         if (kind == 0) {
-            unsafe.putInt(address, value);
+            throw new RuntimeException("This is only for test in JVM sun Unsafe, uncomment the next comment");
+            //unsafe.putInt(address, value);
         } else {
-            if (kind == 1) {
+            if (kind == 1 || kind == 2) {
                 int index = getLongArrayIndex(address);
                 address = getLongArrayAddress(address);
                 long[] targetLongArray = getTargetLongArray(index);
@@ -82,9 +108,10 @@ public class UNSAFE {
 
     static int getInt(long address) {
         if (kind == 0) {
-            return unsafe.getInt(address);
+            throw new RuntimeException("This is only for test in JVM sun Unsafe, uncomment the next comment");
+            //return unsafe.getInt(address);
         } else {
-            if (kind == 1) {
+            if (kind == 1 || kind == 2) {
                 int index = getLongArrayIndex(address);
                 address = getLongArrayAddress(address);
                 long[] targetLongArray = getTargetLongArray(index);
@@ -98,9 +125,10 @@ public class UNSAFE {
 
     static double getDouble(long address) {
         if (kind == 0) {
-            return unsafe.getDouble(address);
+            throw new RuntimeException("This is only for test in JVM sun Unsafe, uncomment the next comment");
+            //return unsafe.getDouble(address);
         } else {
-            if (kind == 1) {
+            if (kind == 1 || kind == 2) {
                 int index = getLongArrayIndex(address);
                 address = getLongArrayAddress(address);
                 long[] targetLongArray = getTargetLongArray(index);
@@ -114,9 +142,10 @@ public class UNSAFE {
 
     static void putDouble(long address, double value) {
         if (kind == 0) {
-            unsafe.putDouble(address, value);
+            throw new RuntimeException("This is only for test in JVM sun Unsafe, uncomment the next comment");
+            //unsafe.putDouble(address, value);
         } else {
-            if (kind == 1) {
+            if (kind == 1 || kind == 2) {
                 int index = getLongArrayIndex(address);
                 address = getLongArrayAddress(address);
                 long[] targetLongArray = getTargetLongArray(index);
@@ -130,9 +159,10 @@ public class UNSAFE {
 
     static long getLong(long address) {
         if (kind == 0) {
-            return unsafe.getLong(address);
+            throw new RuntimeException("This is only for test in JVM sun Unsafe, uncomment the next comment");
+            //return unsafe.getLong(address);
         } else {
-            if (kind == 1) {
+            if (kind == 1 || kind == 2) {
                 int index = getLongArrayIndex(address);
                 address = getLongArrayAddress(address);
                 long[] targetLongArray = getTargetLongArray(index);
@@ -146,9 +176,10 @@ public class UNSAFE {
 
     static void putLong(long address, long value) {
         if (kind == 0) {
-            unsafe.putLong(address, value);
+            throw new RuntimeException("This is only for test in JVM sun Unsafe, uncomment the next comment");
+            //unsafe.putLong(address, value);
         } else {
-            if (kind == 1) {
+            if (kind == 1 || kind == 2) {
                 int index = getLongArrayIndex(address);
                 address = getLongArrayAddress(address);
                 long[] targetLongArray = getTargetLongArray(index);
@@ -169,7 +200,16 @@ public class UNSAFE {
     }
 
     static long[] getTargetLongArray(int index) {
-        return unsafeLongArray.get(index);
+        if (kind == 1) {
+            return unsafeLongArray.get(index);
+        } else {
+            if (kind == 2) {
+                return unsafeLongArrayList.get(index);
+            } else {
+                throw new RuntimeException("do not support kind " + kind +
+                        " 0 use sun Unsafe ||1 use HashMap self Unsafe || 2 use ArrayList self Unsafe");
+            }
+        }
     }
 
 }

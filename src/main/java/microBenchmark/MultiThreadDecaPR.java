@@ -1,7 +1,6 @@
 package microBenchmark;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -88,8 +87,10 @@ public class MultiThreadDecaPR extends MultiThreadPR {
                 e.printStackTrace();
             }
         }
-        for (int i = 0; i < numPartitions; i++) {
-            System.out.println(results[i].toString());
+        if(printResult == 1) {
+            for (int i = 0; i < numPartitions; i++) {
+                System.out.println(results[i].toString());
+            }
         }
     }
 
@@ -250,7 +251,6 @@ public class MultiThreadDecaPR extends MultiThreadPR {
                 }
             }
             return reduceMap;
-
         }
     }
 

@@ -227,9 +227,10 @@ public class MultiThreadJavaPR extends MultiThreadPR {
                 e.printStackTrace();
             }
         }
-
-        for (int i = 0; i < numPartitions; i++) {
-            System.out.println(results[i]);
+        if(printResult == 1) {
+            for (int i = 0; i < numPartitions; i++) {
+                System.out.println(results[i]);
+            }
         }
     }
 

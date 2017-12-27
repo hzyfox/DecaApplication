@@ -13,6 +13,10 @@ public class PRHelper {
         File dataFile = new File(args[1]);
         int iterations = Integer.parseInt(args[2]);
         int sysGcFlag = Integer.parseInt(args[5]); //0 donot trigger 1 trigger
+        int kind = Integer.parseInt(args[6]);
+        int printFlag = Integer.parseInt(args[7]);
+        UNSAFE.kind = kind; //0 use sun Unsafe 1 use self Unsafe
+        PR.printResult = printFlag; // 1打印结果 其他不打印结果
         PR pr = null;
 
         switch (type) {
@@ -38,10 +42,10 @@ public class PRHelper {
                 pr = new MultiThreadJavaPR(numCores, numPartitions);
                 break;
             }
-            case 7:{
+            case 7: {
                 int numCores = Integer.parseInt(args[3]);
                 int numPartitions = Integer.parseInt(args[4]);
-                pr = new MultiThreadDecaPR(numCores,numPartitions);
+                pr = new MultiThreadDecaPR(numCores, numPartitions);
                 break;
             }
             case 8: {
